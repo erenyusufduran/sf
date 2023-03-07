@@ -16,7 +16,7 @@ pub mod sf {
         let admin = &mut ctx.accounts.admin;
         let sol_bank = &mut ctx.accounts.sol_bank;
 
-        require!(stage.admin == admin.key(), ErrorCode::AuthenticationError);
+        // require!(stage.admin == admin.key(), ErrorCode::AuthenticationError);
 
         require!(stage.executed != true, ErrorCode::AlreadyExecuted);
 

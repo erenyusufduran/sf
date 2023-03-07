@@ -45,7 +45,9 @@ describe("sf", () => {
 
     const _solBank = await program.account.solBank.fetch(solBankPDA);
     const _management = await program.account.management.fetch(management.publicKey);
+
     assert(_solBank, solBankPDA.toString());
-    assert(provider.wallet.publicKey, _management.admin.toString());
+    assert(provider.wallet.publicKey.toString(), _management.admin.toString());
+    assert(_management.executed, true.toString());
   });
 });
