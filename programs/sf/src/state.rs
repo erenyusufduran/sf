@@ -66,7 +66,7 @@ pub struct Community {
 
 #[derive(Accounts)]
 pub struct CreateCommunity<'info> {
-    #[account(init,payer=user,space=8+32+8)]
+    #[account(init,payer=user,space=8+32+434)]
     pub community: Account<'info, Community>,
     #[account(mut)]
     pub user: Signer<'info>,

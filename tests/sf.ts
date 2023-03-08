@@ -61,5 +61,32 @@ describe("sf", () => {
       const _management = await program.account.management.fetch(management.publicKey);
       assert(!_management.pause);
     });
+
+    it("Create community", async () => {
+      const arr = [];
+      for (let i = 0; i < 5; i++) {
+        const newUser = anchor.web3.Keypair.generate().publicKey;
+        arr.push(newUser);
+      }
+      const community = anchor.web3.Keypair.generate();
+      const _comm = {
+        members: arr,
+        name: "SF",
+        description: "This is a social funding platform for social communities.",
+        permission: false,
+      };
+      await program.methods
+        .createCommunity(_comm.name, _comm.description, _comm.members, _comm.permission)
+        .accounts({
+          community: new anchor.web3.PublicKey(community.publicKey),
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([community])
+        .rpc();
+
+      const communityAccount = await program.account.community.fetch(community.publicKey);
+      assert(communityAccount.name, _comm.name);
+      assert(communityAccount.description, _comm.description);
+    });
   });
 });
