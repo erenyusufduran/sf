@@ -13,41 +13,53 @@ describe("sf", () => {
 
   const management = anchor.web3.Keypair.generate();
   const admin = provider.wallet;
-  it("Initialize SolBank, Stage and Admin accounts.", async () => {
-    const [solBankPDA, solBankBump] = anchor.web3.PublicKey.findProgramAddressSync(
-      [Buffer.from("sol_bank")],
-      program.programId
-    );
+  const [solBankPDA, solBankBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("sol_bank")],
+    program.programId
+  );
 
-    const balance = await provider.connection.getBalance(admin.publicKey);
-    if (balance / anchor.web3.LAMPORTS_PER_SOL < 1) {
-      const airdropSign = await provider.connection.requestAirdrop(admin.publicKey, anchor.web3.LAMPORTS_PER_SOL);
-      const latestBlockhash = await provider.connection.getLatestBlockhash();
-      await provider.connection.confirmTransaction({
-        blockhash: latestBlockhash.blockhash,
-        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-        signature: airdropSign,
-      });
-    }
-    console.log("New balance is: ", await provider.connection.getBalance(admin.publicKey));
+  describe("Contract Tests", () => {
+    beforeEach(async () => {
+      const balance = await provider.connection.getBalance(admin.publicKey);
+      if (balance / anchor.web3.LAMPORTS_PER_SOL < 1) {
+        const airdropSign = await provider.connection.requestAirdrop(admin.publicKey, anchor.web3.LAMPORTS_PER_SOL);
+        const latestBlockhash = await provider.connection.getLatestBlockhash();
+        await provider.connection.confirmTransaction({
+          blockhash: latestBlockhash.blockhash,
+          lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+          signature: airdropSign,
+        });
+      }
+      console.log("New balance is: ", await provider.connection.getBalance(admin.publicKey));
+    });
 
-    await program.methods
-      .stage(solBankBump)
-      .accounts({
-        management: management.publicKey,
-        solBank: solBankPDA,
-        admin: provider.wallet.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([management])
-      // .signers([admin, management])
-      .rpc();
+    it("Initialize SolBank, Stage and Admin accounts.", async () => {
+      await program.methods
+        .stage(solBankBump)
+        .accounts({
+          management: management.publicKey,
+          solBank: solBankPDA,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([management])
+        .rpc();
 
-    const _solBank = await program.account.solBank.fetch(solBankPDA);
-    const _management = await program.account.management.fetch(management.publicKey);
+      const _solBank = await program.account.solBank.fetch(solBankPDA);
+      const _management = await program.account.management.fetch(management.publicKey);
 
-    assert(_solBank, solBankPDA.toString());
-    assert(provider.wallet.publicKey.toString(), _management.admin.toString());
-    assert(_management.executed, true.toString());
+      assert(_solBank, solBankPDA.toString());
+      assert(provider.wallet.publicKey.toString(), _management.admin.toString());
+      assert(_management.executed, true.toString());
+    });
+
+    it("When pause false, process begins.", async () => {
+      await program.methods
+        .pause(false)
+        .accounts({ management: management.publicKey, admin: provider.wallet.publicKey })
+        .rpc();
+
+      const _management = await program.account.management.fetch(management.publicKey);
+      assert(!_management.pause);
+    });
   });
 });
